@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChordMaster Pro v3 - Creador de Tablas de Acordes</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&family=Merriweather:wght@700&family=Open+Sans:wght@400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #2a2a4a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0c0;
+            --accent-primary: #00c6ab;
+            --accent-secondary: #f76a8c;
+            --border-color: #3a3a5a;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --font-main: 'Poppins', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+
+            --export-spec-bg-wrapper: #e9eef2;
+            --export-spec-bg-chart: #ffffff;
+            --export-spec-text-primary: #2d3748;
+            --export-spec-text-secondary: #718096;
+            --export-spec-accent: #00a991;
+            --export-spec-border: #cbd5e0;
+            --export-spec-font-title: 'Merriweather', Georgia, serif;
+            --export-spec-font-heading: 'Poppins', 'Helvetica Neue', sans-serif;
+            --export-spec-font-body: 'Open Sans', 'Helvetica Neue', sans-serif;
+            --export-spec-font-chord: 'Roboto Mono', monospace;
+            --export-spec-font-size-title-base: 2.2em;
+            --export-spec-font-size-key-base: 1.1em;
+            --export-spec-font-size-section-name-base: 1.3em;
+            --export-spec-font-size-lyrics-base: 1em;
+            --export-spec-font-size-chord-base: 1em;
+
+            --export-classic-border-color: #555e6d;
+            --export-classic-header-bg: #1c293a;
+            --export-classic-chart-bg: #161b22;
+            --export-classic-text-color: #c9d1d9;
+            --export-classic-title-text-color: #e6edf3;
+            --export-classic-empty-cell-overlay: rgba(0, 0, 0, 0.15);
+            --export-classic-wrapper-bg: #0d1117;
+
+            --export-min-dark-bg-wrapper: #1f1f2e;
+            --export-min-dark-bg-chart: #2a2a4a;
+            --export-min-dark-text-primary: #e0e0e0;
+            --export-min-dark-text-secondary: #a0a0c0;
+            --export-min-dark-accent: var(--accent-primary);
+            --export-min-dark-border: #4a4a6a;
+            --export-min-dark-font-main: 'Poppins', sans-serif;
+            --export-min-dark-font-chord: 'Roboto Mono', monospace;
+
+            --export-min-light-bg-wrapper: #f0f2f5;
+            --export-min-light-bg-chart: #ffffff;
+            --export-min-light-text-primary: #333333;
+            --export-min-light-text-secondary: #777777;
+            --export-min-light-accent: #007bff;
+            --export-min-light-border: #e0e0e0;
+            --export-min-light-font-main: 'Poppins', sans-serif;
+            --export-min-light-font-chord: 'Roboto Mono', monospace;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            background-color: var(--bg-primary); color: var(--text-primary); font-family: var(--font-main);
+            margin: 0; padding: 0; line-height: 1.6; display: flex; min-height: 100vh; overflow-x: hidden;
+            background-image: linear-gradient(45deg, rgba(22, 33, 62, 0.8) 25%, transparent 25%),
+                              linear-gradient(-45deg, rgba(22, 33, 62, 0.8) 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, rgba(22, 33, 62, 0.8) 75%),
+                              linear-gradient(-45deg, transparent 75%, rgba(22, 33, 62, 0.8) 75%);
+            background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        .app-container { display: flex; width: 100%; }
+        .sidebar {
+            width: 320px; background-color: var(--bg-secondary); padding: 25px;
+            border-right: 1px solid var(--border-color); box-shadow: 2px 0 15px var(--shadow-color);
+            display: flex; flex-direction: column; gap: 20px;
+            height: 100vh; position: fixed; overflow-y: auto; z-index: 10;
+        }
+        .sidebar-header { text-align: center; margin-bottom: 5px;}
+        .sidebar-header h1 { font-size: 1.8em; color: var(--accent-primary); margin: 0 0 5px 0; font-weight: 600; }
+        .sidebar-header p { font-size: 0.9em; color: var(--text-secondary); margin: 0;}
+        .sidebar-section { background-color: rgba(0,0,0,0.1); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .sidebar-section h2 { font-size: 1.1em; color: var(--accent-primary); margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; font-weight: 500; }
+        .main-content { flex-grow: 1; padding: 30px; margin-left: 320px; overflow-y: auto; }
+        #chordChartEditor { display: flex; flex-direction: column; gap: 25px; }
+
+        input[type="text"], select, textarea {
+            background-color: var(--bg-tertiary); color: var(--text-primary);
+            border: 1px solid var(--border-color); padding: 10px 12px;
+            margin: 5px 0; border-radius: 6px; font-size: 0.9em;
+            font-family: var(--font-main); transition: border-color 0.3s ease, box-shadow 0.3s ease; width: 100%;
+        }
+        input[type="text"]:focus, select:focus, textarea:focus {
+            outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(0, 198, 171, 0.3);
+        }
+        textarea { resize: vertical; min-height: 90px; }
+
+        .app-button {
+            background-color: var(--accent-primary); color: var(--bg-primary);
+            padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer;
+            font-size: 0.95em; font-weight: 500; font-family: var(--font-main);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; text-align: center;
+        }
+        .app-button i { font-size: 1em; }
+        .app-button:hover { background-color: #00b39a; transform: translateY(-2px); }
+        .app-button.secondary { background-color: var(--accent-secondary); }
+        .app-button.secondary:hover { background-color: #e05277; }
+        .app-button.ghost { background-color: transparent; color: var(--accent-primary); border: 1px solid var(--accent-primary); }
+        .app-button.ghost:hover { background-color: rgba(0, 198, 171, 0.1); }
+
+        .song-section-card {
+            background-color: var(--bg-secondary); border: 1px solid var(--border-color);
+            padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px var(--shadow-color);
+            transition: background-color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+        }
+        .section-card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 18px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color);
+            gap: 15px; flex-wrap: wrap;
+        }
+        .section-name-input { flex-grow: 1; min-width: 200px; font-size: 1.1em; font-weight: 500; }
+        .color-controls { display: flex; align-items: center; }
+        .color-buttons-label { font-size: 0.9em; color: var(--text-secondary); margin-right: 10px; }
+        .color-buttons button {
+            width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent;
+            margin-left: 6px; cursor: pointer; transition: transform 0.2s ease, border-color 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .color-buttons button.selected-color { border-color: #fff; transform: scale(1.15); }
+        .color-buttons button:hover { transform: scale(1.1); border-color: #fff; }
+        .delete-section-btn {
+            background-color: transparent; color: var(--accent-secondary); border: 1px solid var(--accent-secondary);
+            padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: 500;
+            transition: background-color 0.3s ease, color 0.3s ease; display: flex; align-items: center; gap: 5px;
+        }
+        .delete-section-btn:hover { background-color: var(--accent-secondary); color: var(--bg-primary); }
+        .section-grid-container { display: grid; grid-template-columns: 2fr repeat(4, 1fr); gap: 15px; align-items: stretch; }
+        .lyrics-cell { grid-column: 1; }
+        .chord-row { display: contents; }
+        .chord-cell input[type="text"] { font-family: var(--font-mono); font-size: 1.1em; font-weight: 500; text-align: center; padding: 10px 8px; }
+        .add-chord-row-btn {
+            grid-column: 1 / -1; background-color: var(--bg-tertiary); color: var(--accent-primary);
+            border: 1px dashed var(--border-color); padding: 10px 15px; border-radius: 6px; cursor: pointer;
+            font-size: 0.9em; margin-top: 15px; transition: background-color 0.3s ease, border-color 0.3s ease;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .add-chord-row-btn:hover { background-color: var(--border-color); border-color: var(--accent-primary); }
+        .variant-color-legend { margin-top: 15px; font-size: 0.85em; color: var(--text-secondary); }
+        .variant-color-legend p { margin-bottom: 8px; }
+        .variant-color-legend code { background-color: var(--bg-tertiary); padding: 2px 5px; border-radius: 3px; color: var(--accent-primary); }
+        .variant-color-legend span { display: inline-block; padding: 3px 8px; margin: 3px; border-radius: 4px; font-family: var(--font-mono); border: 1px solid var(--border-color); }
+        
+        .width-measurer, .chord-width-measurer { position: absolute; visibility: hidden; white-space: pre; font-family: 'Arial', sans-serif; }
+        .width-measurer.export-lyrics-cell-spec, .width-measurer.export-lyrics-cell-min-light, .width-measurer.export-lyrics-cell-min-dark { font-family: var(--export-min-light-font-main); }
+        .width-measurer.export-lyrics-cell-classic { font-family: 'Arial', sans-serif; }
+        .chord-width-measurer.export-chord-cell-spec, .chord-width-measurer.export-chord-cell-min-light, .chord-width-measurer.export-chord-cell-min-dark { font-family: var(--export-min-light-font-chord); font-weight: 500; }
+        .chord-width-measurer.export-chord-cell-classic { font-family: 'Consolas', monospace; font-weight: bold; }
+        .chord-width-measurer span { display: block; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7);
+            display: flex; justify-content: center; align-items: center; z-index: 1000;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        .modal-content {
+            background-color: var(--bg-secondary); color: var(--text-primary); padding: 25px; border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 1000px; max-height: 90vh;
+            display: flex; flex-direction: column; transform: scale(0.95); transition: transform 0.3s ease;
+        }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px; }
+        .modal-header h2 { margin: 0; color: var(--accent-primary); font-size: 1.4em; }
+        .close-modal-btn { background: none; border: none; color: var(--text-secondary); font-size: 2em; cursor: pointer; padding: 0; line-height: 1; }
+        .close-modal-btn:hover { color: var(--accent-secondary); }
+        .modal-body { overflow-y: auto; flex-grow: 1; }
+        #previewChartContainer { 
+            width: 100%; 
+            min-height: 300px; 
+            display: flex; /* Para centrar el chart si es más pequeño que el contenedor */
+            justify-content: center;
+            align-items: flex-start; /* Alinear arriba */
+        }
+        #previewChartContainer > * { /* El chart dentro del preview */
+            margin: auto; /* Centrar si es más angosto que el previewChartContainer */
+        }
+        .modal-footer { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 15px; text-align: center; font-size: 0.85em; color: var(--text-secondary); }
+
+        @media (max-width: 1024px) {
+            .sidebar { width: 280px; }
+            .main-content { margin-left: 280px; padding: 20px; }
+            .section-grid-container { grid-template-columns: 1.5fr repeat(4, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .sidebar { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); box-shadow: 0 2px 10px var(--shadow-color); }
+            .app-container { flex-direction: column; }
+            .main-content { margin-left: 0; padding: 20px; }
+            .section-card-header { flex-direction: column; align-items: stretch; }
+            .section-name-input { width: 100%; }
+            .color-controls { margin: 10px 0; justify-content: flex-start; }
+            .delete-section-btn { width: 100%; margin-top: 10px; }
+            .section-grid-container { grid-template-columns: 1fr; gap: 10px; }
+            .lyrics-cell, .chord-row, .chord-cell { width: 100%; grid-column: 1 / -1; }
+            .lyrics-cell textarea { margin-bottom: 10px; }
+            .chord-cell input[type="text"] { margin-bottom: 5px; }
+            .add-chord-row-btn { width: 100%; }
+            .modal-content { width: 95%; padding: 15px; }
+            .modal-header h2 { font-size: 1.2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-guitar"></i> ChordMaster</h1>
+                <p>Tu Asistente Musical</p>
+            </div>
+
+            <div class="sidebar-section">
+                <h2><i class="fas fa-music"></i> Info Canción</h2>
+                <input type="text" id="songTitle" placeholder="Título de la Canción">
+                <input type="text" id="songKey" placeholder="Tonalidad (Ej: G, Am)">
+            </div>
+            
+            <div class="sidebar-section">
+                <h2><i class="fas fa-cog"></i> Opciones Exportación</h2>
+                <input type="text" id="exportFilename" placeholder="Nombre del archivo">
+                <select id="exportAspectRatio" title="Relación de aspecto para la imagen PNG exportada">
+                    <option value="original">Aspecto Original</option>
+                    <option value="16:9">16:9</option> <option value="4:3">4:3</option>
+                    <option value="1:1">1:1</option> <option value="3:4">3:4</option>
+                    <option value="9:16">9:16</option>
+                </select>
+                <label for="exportTemplateSelect" style="display:block; margin-top:10px; font-size:0.9em; color:var(--text-secondary);">Plantilla de Exportación:</label>
+                <select id="exportTemplateSelect" title="Elige el estilo visual para la exportación">
+                    <option value="classicDark" selected>Clásica Oscura (UI)</option>
+                    <option value="singerProLight">Cantante Pro (Clara)</option>
+                    <option value="minimalistDark">Minimalista Oscura</option>
+                    <option value="minimalistLight">Minimalista Clara</option>
+                </select>
+                <div class="variant-color-legend"></div>
+            </div>
+
+            <button id="addSectionBtn" class="app-button">
+                <i class="fas fa-plus-circle"></i> Nueva Sección
+            </button>
+            <button id="previewExportBtn" class="app-button ghost" style="margin-top: 10px;">
+                <i class="fas fa-eye"></i> Vista Previa
+            </button>
+            <button id="exportPngBtn" class="app-button secondary" style="margin-top: 10px;">
+                <i class="fas fa-file-image"></i> Exportar PNG
+            </button>
+        </aside>
+
+        <main class="main-content">
+            <div id="chordChartEditor"></div>
+        </main>
+    </div>
+
+    <div id="previewModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Vista Previa de Exportación</h2>
+                <button id="closePreviewModalBtn" class="close-modal-btn" title="Cerrar vista previa">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="previewChartContainer"></div>
+            </div>
+            <div class="modal-footer">
+                <p>Esta es una aproximación. El PNG final podría variar ligeramente.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const getEl = (id) => document.getElementById(id);
+            // ... (todos los selectores de elementos)
+            const chordChartEditor = getEl('chordChartEditor');
+            const songTitleInput = getEl('songTitle');
+            const songKeyInput = getEl('songKey');
+            const exportFilenameInput = getEl('exportFilename');
+            const exportAspectRatioSelect = getEl('exportAspectRatio');
+            const variantColorLegend = document.querySelector('.variant-color-legend');
+            const exportTemplateSelect = getEl('exportTemplateSelect');
+            const previewExportBtn = getEl('previewExportBtn');
+            const exportPngBtn = getEl('exportPngBtn');
+            const previewModal = getEl('previewModal');
+            const closePreviewModalBtn = getEl('closePreviewModalBtn');
+            const previewChartContainer = getEl('previewChartContainer');
+
+            let lastGeneratedPreview = { // Almacenar la última vista previa generada
+                chartElement: null,
+                stylesHtml: '',
+                wrapperClass: '',
+                currentBaseFontSize: null // Este será el font-size ajustado de la vista previa
+            };
+
+
+            const appTextColors = [
+                { name: 'Predeterminado', value: 'inherit' }, { name: 'Blanco Puro', value: '#FFFFFF' },
+                { name: 'Gris Tech', value: '#bdc3c7' }, { name: 'Rojo Neón', value: '#ff4757' },
+                { name: 'Azul Eléctrico', value: '#3742fa' }, { name: 'Verde Lima', value: '#32ff7e' },
+                { name: 'Amarillo Solar', value: '#feca57' }, { name: 'Naranja Fuego', value: '#ff7f50' },
+                { name: 'Púrpura Galaxia', value: '#706fd3' }, { name: 'Cian Aqua', value: '#17c0eb'}
+            ];
+
+            function populateVariantColorLegend() {
+                let legendHtml = '<p>Usa <code>Texto#índice</code> o <code>Texto#nombre</code>. Colores:</p>';
+                appTextColors.forEach((color, index) => {
+                    legendHtml += `<span style="background-color: var(--bg-tertiary); color: ${color.value}; border: 1px solid var(--border-color);">${index}: ${color.name}</span> `;
+                });
+                variantColorLegend.innerHTML = legendHtml;
+            }
+            populateVariantColorLegend();
+
+            const sectionBgColors = [
+                { name: 'Base Tarjeta', value: 'var(--bg-secondary)' }, { name: 'Azul Profundo', value: '#1B2A49' },
+                { name: 'Verde Bosque', value: '#274e13' }, { name: 'Púrpura Real', value: '#4a0072' },
+                { name: 'Terracota', value: '#7f4f24' }, { name: 'Gris Roca', value: '#495057' },
+                { name: 'Vino Tinto', value: '#5c000f' }
+            ];
+            let sectionIdCounter = 0;
+
+            songTitleInput.addEventListener('input', () => {
+                exportFilenameInput.value = songTitleInput.value.trim().replace(/\s+/g, '_') || 'mi_cancion';
+                lastGeneratedPreview.chartElement = null; // Invalidar vista previa si cambia info
+            });
+             songKeyInput.addEventListener('input', () => {
+                lastGeneratedPreview.chartElement = null; // Invalidar vista previa
+            });
+            exportFilenameInput.value = 'mi_cancion';
+
+            function addChordRow(sectionGridContainer, lyricsCell, currentSectionCard) {
+                lastGeneratedPreview.chartElement = null; // Invalidar vista previa
+                const chordRowDiv = document.createElement('div'); chordRowDiv.classList.add('chord-row');
+                const numChordRows = Array.from(currentSectionCard.querySelectorAll('.chord-row')).length;
+                for (let i = 1; i <= 4; i++) {
+                    const chordCell = document.createElement('div'); chordCell.classList.add('chord-cell');
+                    const chordInput = document.createElement('input'); chordInput.type = 'text';
+                    chordInput.placeholder = `Acorde ${i}`;
+                    chordInput.setAttribute('aria-label', `Acorde ${i} fila ${numChordRows + 1} sección ${currentSectionCard.id}`);
+                    chordInput.addEventListener('input', () => lastGeneratedPreview.chartElement = null); // Invalidar
+                    chordCell.appendChild(chordInput); chordRowDiv.appendChild(chordCell);
+                }
+                sectionGridContainer.insertBefore(chordRowDiv, sectionGridContainer.querySelector('.add-chord-row-btn'));
+                lyricsCell.style.gridRowEnd = `span ${numChordRows + 1}`;
+            }
+
+            function addSection(isInitial = false) {
+                lastGeneratedPreview.chartElement = null; // Invalidar vista previa
+                sectionIdCounter++;
+                const sectionCard = document.createElement('div'); sectionCard.className = 'song-section-card';
+                sectionCard.id = `section-${sectionIdCounter}`; sectionCard.style.backgroundColor = sectionBgColors[0].value;
+                const cardHeader = document.createElement('div'); cardHeader.className = 'section-card-header';
+                const nameInput = document.createElement('input'); nameInput.className = 'section-name-input';
+                nameInput.type = 'text'; nameInput.placeholder = `Nombre Sección (Ej: Estrofa ${sectionIdCounter})`;
+                nameInput.addEventListener('input', () => lastGeneratedPreview.chartElement = null);
+                
+                const colorControls = document.createElement('div'); colorControls.className = 'color-controls';
+                const colorLabel = document.createElement('span'); colorLabel.className = 'color-buttons-label';
+                colorLabel.textContent = 'Fondo:'; colorControls.appendChild(colorLabel);
+                const colorBtnsDiv = document.createElement('div'); colorBtnsDiv.className = 'color-buttons';
+                sectionBgColors.forEach((c, index) => {
+                    const btn = document.createElement('button'); btn.style.backgroundColor = c.value;
+                    btn.title = c.name; btn.dataset.color = c.value;
+                    if (index === 0) btn.classList.add('selected-color');
+                    btn.addEventListener('click', (e) => {
+                        sectionCard.style.backgroundColor = e.target.dataset.color;
+                        colorBtnsDiv.querySelectorAll('button').forEach(b => b.classList.remove('selected-color'));
+                        e.target.classList.add('selected-color');
+                        lastGeneratedPreview.chartElement = null; // Invalidar
+                    });
+                    colorBtnsDiv.appendChild(btn);
+                });
+                colorControls.appendChild(colorBtnsDiv);
+                const delBtn = document.createElement('button'); delBtn.className = 'delete-section-btn';
+                delBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Eliminar';
+                delBtn.addEventListener('click', () => {
+                    if (confirm('¿Seguro que quieres eliminar esta sección?')) {
+                        sectionCard.style.opacity = '0'; sectionCard.style.transform = 'scale(0.95) translateY(-10px)';
+                        setTimeout(() => { sectionCard.remove(); lastGeneratedPreview.chartElement = null; }, 300);
+                    }
+                });
+                cardHeader.append(nameInput, colorControls, delBtn); sectionCard.appendChild(cardHeader);
+                const gridContainer = document.createElement('div'); gridContainer.className = 'section-grid-container';
+                const lyricsCell = document.createElement('div'); lyricsCell.className = 'lyrics-cell';
+                lyricsCell.style.gridRowStart = 1;
+                const lyricsArea = document.createElement('textarea'); lyricsArea.placeholder = 'Letra aquí...\nCada línea de letra puede tener acordes asociados.';
+                lyricsArea.addEventListener('input', () => lastGeneratedPreview.chartElement = null);
+                lyricsCell.appendChild(lyricsArea); gridContainer.appendChild(lyricsCell);
+                const addCRBtn = document.createElement('button'); addCRBtn.className = 'add-chord-row-btn';
+                addCRBtn.innerHTML = '<i class="fas fa-plus"></i> Agregar Línea de Acordes';
+                addCRBtn.addEventListener('click', () => addChordRow(gridContainer, lyricsCell, sectionCard));
+                gridContainer.appendChild(addCRBtn); addChordRow(gridContainer, lyricsCell, sectionCard); 
+                sectionCard.appendChild(gridContainer); chordChartEditor.appendChild(sectionCard);
+                if (!isInitial) sectionCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            getEl('addSectionBtn').addEventListener('click', () => addSection(false));
+            
+            function parseChordInputWithAppColors(inputValue) {
+                const trimmedValue = inputValue.trim(); if (!trimmedValue) return "";
+                const variants = trimmedValue.split('\n'); let htmlOutput = "";
+                variants.forEach(variantText => {
+                    const parts = variantText.split('#'); const text = parts[0].trim(); let colorValue = 'inherit';
+                    if (parts.length > 1) {
+                        const colorIdentifier = parts[1].trim().toLowerCase();
+                        const colorIndex = parseInt(colorIdentifier, 10);
+                        if (!isNaN(colorIndex) && colorIndex >= 0 && colorIndex < appTextColors.length) {
+                            colorValue = appTextColors[colorIndex].value;
+                        } else {
+                            const namedColor = appTextColors.find(c => c.name.toLowerCase().replace(/\s+/g, '') === colorIdentifier.replace(/\s+/g, ''));
+                            if (namedColor) colorValue = namedColor.value;
+                        }
+                    }
+                    if (text) htmlOutput += `<span style="color: ${colorValue};">${text.replace(/ /g, '&nbsp;')}</span>`;
+                });
+                return htmlOutput;
+            }
+            
+            function measureTextWidth(text, className, baseFontSize, isHtml = false) {
+                const measurer = document.createElement('div'); measurer.className = className;
+                if (isHtml) measurer.innerHTML = text; else measurer.textContent = text;
+                measurer.style.fontSize = `${baseFontSize}px`; document.body.appendChild(measurer);
+                const width = measurer.offsetWidth; document.body.removeChild(measurer); return width;
+            }
+
+            previewExportBtn.addEventListener('click', () => {
+                const selectedTemplate = exportTemplateSelect.value;
+                const { chartElement, stylesHtml, wrapperClass, currentBaseFontSize } = generateAndSizeChartForPreview(selectedTemplate);
+
+                previewChartContainer.innerHTML = ''; 
+                previewChartContainer.className = wrapperClass; // Aplicar clase de wrapper para el fondo del modal
+                
+                const styleTag = document.createElement('style'); styleTag.textContent = stylesHtml;
+                
+                if(chartElement) {
+                    // Almacenar para la exportación final
+                    lastGeneratedPreview.chartElement = chartElement.cloneNode(true); // Clonar para no afectar la vista previa si se modifica
+                    lastGeneratedPreview.stylesHtml = stylesHtml;
+                    lastGeneratedPreview.wrapperClass = wrapperClass;
+                    lastGeneratedPreview.currentBaseFontSize = currentBaseFontSize; // El font-size ya ajustado
+
+                    previewChartContainer.appendChild(styleTag);
+                    previewChartContainer.appendChild(chartElement); // Añadir el chart ya ajustado
+                }
+                previewModal.classList.add('visible');
+            });
+
+            closePreviewModalBtn.addEventListener('click', () => {
+                previewModal.classList.remove('visible'); previewChartContainer.innerHTML = ''; previewChartContainer.className = '';
+            });
+            previewModal.addEventListener('click', (e) => {
+                if (e.target === previewModal) {
+                    previewModal.classList.remove('visible'); previewChartContainer.innerHTML = ''; previewChartContainer.className = '';
+                }
+            });
+
+            function applyOpacityToColor(colorString, opacity) {
+                if (!colorString || colorString === 'var(--bg-secondary)' || colorString === sectionBgColors[0].value) return 'transparent';
+                let r, g, b;
+                try {
+                    if (colorString.startsWith('rgb')) { [r,g,b] = colorString.match(/\d+/g).map(Number); }
+                    else if (colorString.startsWith('#')) {
+                        const hex = colorString.length === 4 ? '#' + colorString[1]+colorString[1]+colorString[2]+colorString[2]+colorString[3]+colorString[3] : colorString;
+                        r = parseInt(hex.slice(1,3), 16); g = parseInt(hex.slice(3,5), 16); b = parseInt(hex.slice(5,7), 16);
+                    } else { return 'transparent'; }
+                    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                } catch (e) { return 'transparent'; }
+            }
+
+            function generateChartHtml(templateName) { // Modificado para devolver solo el chart y sus metadatos
+                const songTitleVal = songTitleInput.value.trim() || 'Título';
+                const songKeyVal = songKeyInput.value.trim();
+                const cssRoot = document.documentElement;
+                let chartOuter = document.createElement('div');
+                let stylesHtml = '', wrapperClass = '', chartBaseFontSize = 15;
+                let measurerLyricsClass = 'width-measurer', measurerChordClass = 'chord-width-measurer';
+                let lyricsFontSizeEm = 1, chordFontSizeEm = 1;
+
+                if (templateName === 'classicDark') {
+                    stylesHtml = `
+                        :root { /* ... (variables classicDark) ... */ 
+                            --export-classic-border-color: ${getComputedStyle(cssRoot).getPropertyValue('--export-classic-border-color').trim()};
+                            --export-classic-header-bg: ${getComputedStyle(cssRoot).getPropertyValue('--export-classic-header-bg').trim()};
+                            --export-classic-chart-bg: ${getComputedStyle(cssRoot).getPropertyValue('--export-classic-chart-bg').trim()};
+                            --export-classic-text-color: ${getComputedStyle(cssRoot).getPropertyValue('--export-classic-text-color').trim()};
+                            --export-classic-title-text-color: ${getComputedStyle(cssRoot).getPropertyValue('--export-classic-title-text-color').trim()};
+                            --export-classic-empty-cell-overlay: ${getComputedStyle(cssRoot).getPropertyValue('--export-classic-empty-cell-overlay').trim()};
+                        }
+                        /* ... (clases .export-*-classic) ... */
+                        .export-chart-wrapper-classic { background-color: ${getComputedStyle(cssRoot).getPropertyValue('--export-classic-wrapper-bg').trim()}; padding: 30px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; }
+                        .export-chart-classic { display: grid; grid-template-columns: 1fr; color: var(--export-classic-text-color); font-family: 'Arial', sans-serif; border: 1px solid var(--export-classic-border-color); box-sizing: border-box; background-color: var(--export-classic-chart-bg); width: auto; max-width: 100%; }
+                        .export-header-row-classic { display: grid; background-color: var(--export-classic-header-bg); border-bottom: 1px solid var(--export-classic-border-color); }
+                        .export-header-title-classic { padding: 0.8em 1.2em; font-size: 1.7em; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; white-space: nowrap; color: var(--export-classic-title-text-color); }
+                        .export-header-key-classic { padding: 0.8em 1.2em; font-size: 1.4em; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; white-space: nowrap; color: var(--export-classic-title-text-color); }
+                        .export-section-classic { display: grid; border-top: 1px solid var(--export-classic-border-color); box-sizing: border-box; }
+                        .export-section-classic:first-of-type { border-top: none; }
+                        .export-lyrics-cell-classic { grid-column: 1; padding: 0.8em 1.2em; font-size: 1.15em; white-space: pre-wrap; border-right: 1px solid var(--export-classic-border-color); display: flex; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; min-height: 3em; line-height: 1.4; position: relative; }
+                        .export-chord-cell-classic { padding: 0.8em 0.7em; text-align: center; font-family: 'Consolas', monospace; font-size: 1.2em; font-weight: bold; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 3em; line-height: 1.3; position: relative; }
+                        .export-chord-cell-classic span { display: block; white-space: nowrap; }
+                        .export-chord-cell-empty-classic::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--export-classic-empty-cell-overlay); z-index: 0; }
+                        .export-chord-cell-empty-classic > * { position: relative; z-index: 1; }`;
+                    wrapperClass = 'export-chart-wrapper-classic'; chartOuter.className = 'export-chart-classic'; chartBaseFontSize = 16;
+                    measurerLyricsClass = 'width-measurer export-lyrics-cell-classic'; measurerChordClass = 'chord-width-measurer export-chord-cell-classic';
+                    lyricsFontSizeEm = 1.15; chordFontSizeEm = 1.2;
+                } else if (templateName === 'singerProLight') {
+                     stylesHtml = `
+                        :root { /* ... (variables export-spec) ... */
+                            --export-spec-bg-wrapper: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-bg-wrapper').trim()};
+                            --export-spec-bg-chart: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-bg-chart').trim()};
+                            --export-spec-text-primary: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-text-primary').trim()};
+                            --export-spec-text-secondary: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-text-secondary').trim()};
+                            --export-spec-accent: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-accent').trim()};
+                            --export-spec-border: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-border').trim()};
+                            --export-spec-font-title: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-font-title').trim()};
+                            --export-spec-font-heading: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-font-heading').trim()};
+                            --export-spec-font-body: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-font-body').trim()};
+                            --export-spec-font-chord: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-font-chord').trim()};
+                            --export-spec-font-size-title-base: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-font-size-title-base').trim()};
+                            --export-spec-font-size-key-base: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-font-size-key-base').trim()};
+                            --export-spec-font-size-section-name-base: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-font-size-section-name-base').trim()};
+                            --export-spec-font-size-lyrics-base: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-font-size-lyrics-base').trim()};
+                            --export-spec-font-size-chord-base: ${getComputedStyle(cssRoot).getPropertyValue('--export-spec-font-size-chord-base').trim()};
+                        }
+                        /* ... (clases .export-*-spec) ... */
+                        .export-chart-wrapper-spec { background-color: var(--export-spec-bg-wrapper); padding: 60px; font-family: var(--export-spec-font-body); color: var(--export-spec-text-primary); display: flex; justify-content: center; align-items: flex-start; }
+                        .export-chart-spec { background-color: var(--export-spec-bg-chart); border: 1px solid var(--export-spec-border); border-radius: 8px; box-shadow: 0 15px 35px rgba(45, 55, 72, 0.15); overflow: hidden; width: auto; max-width: 100%; }
+                        .export-main-header-spec { padding: 30px 35px 25px 35px; text-align: center; border-bottom: 1px solid var(--export-spec-border); }
+                        .export-title-spec { font-family: var(--export-spec-font-title); font-size: var(--export-spec-font-size-title-base); color: var(--export-spec-text-primary); font-weight: 700; margin: 0 0 8px 0; line-height: 1.2; }
+                        .export-key-spec { font-family: var(--export-spec-font-heading); font-size: var(--export-spec-font-size-key-base); color: var(--export-spec-accent); font-weight: 500; margin: 0; }
+                        .export-section-spec { /* bgColor se aplica dinámicamente */ }
+                        .export-section-header-spec { padding: 15px 30px 12px 30px; border-bottom: 1px solid var(--export-spec-border); font-family: var(--export-spec-font-heading); font-size: var(--export-spec-font-size-section-name-base); font-weight: 600; color: var(--export-spec-accent); text-align: left; }
+                        .export-section-content-spec { display: grid; padding: 20px 30px; gap: 5px 10px; }
+                        .export-lyrics-cell-spec { padding: 6px 0; font-size: var(--export-spec-font-size-lyrics-base); line-height: 1.6; text-align: left; white-space: pre-wrap; color: var(--export-spec-text-primary); align-self: flex-start; }
+                        .export-chord-cell-spec { padding: 6px 0; font-family: var(--export-spec-font-chord); font-size: var(--export-spec-font-size-chord-base); font-weight: 500; text-align: center; line-height: 1.5; color: var(--export-spec-text-primary); display: flex; flex-direction: column; justify-content: flex-start; align-items: center; min-height: 1.5em; }
+                        .export-chord-cell-spec span { display: block; white-space: nowrap; }
+                        .export-chord-cell-empty-spec::before { content: ""; }
+                        .export-footer-spec { padding: 20px 30px; text-align: center; font-size: 0.8em; color: var(--export-spec-text-secondary); border-top: 1px solid var(--export-spec-border); margin-top: 10px; font-family: var(--export-spec-font-heading); }`;
+                    wrapperClass = 'export-chart-wrapper-spec'; chartOuter.className = 'export-chart-spec'; chartBaseFontSize = 15;
+                    measurerLyricsClass = 'width-measurer export-lyrics-cell-spec'; measurerChordClass = 'chord-width-measurer export-chord-cell-spec';
+                    lyricsFontSizeEm = parseFloat(getComputedStyle(cssRoot).getPropertyValue('--export-spec-font-size-lyrics-base').trim() || '1em');
+                    chordFontSizeEm = parseFloat(getComputedStyle(cssRoot).getPropertyValue('--export-spec-font-size-chord-base').trim() || '1em');
+                } else if (templateName === 'minimalistDark' || templateName === 'minimalistLight') {
+                    const t = templateName.replace('minimalist', 'min-');
+                    const varsPrefix = templateName === 'minimalistDark' ? '--export-min-dark-' : '--export-min-light-';
+                    stylesHtml = `
+                        :root { /* ... (variables ${varsPrefix}) ... */
+                            ${varsPrefix}bg-wrapper: ${getComputedStyle(cssRoot).getPropertyValue(varsPrefix+'bg-wrapper').trim()};
+                            ${varsPrefix}bg-chart: ${getComputedStyle(cssRoot).getPropertyValue(varsPrefix+'bg-chart').trim()};
+                            ${varsPrefix}text-primary: ${getComputedStyle(cssRoot).getPropertyValue(varsPrefix+'text-primary').trim()};
+                            ${varsPrefix}text-secondary: ${getComputedStyle(cssRoot).getPropertyValue(varsPrefix+'text-secondary').trim()};
+                            ${varsPrefix}accent: ${getComputedStyle(cssRoot).getPropertyValue(varsPrefix+'accent').trim()};
+                            ${varsPrefix}border: ${getComputedStyle(cssRoot).getPropertyValue(varsPrefix+'border').trim()};
+                            ${varsPrefix}font-main: ${getComputedStyle(cssRoot).getPropertyValue(varsPrefix+'font-main').trim()};
+                            ${varsPrefix}font-chord: ${getComputedStyle(cssRoot).getPropertyValue(varsPrefix+'font-chord').trim()};
+                        }
+                        /* ... (clases .export-*-${t}) ... */
+                        .export-chart-wrapper-${t} { background-color: var(${varsPrefix}bg-wrapper); padding: 40px; font-family: var(${varsPrefix}font-main); color: var(${varsPrefix}text-primary); display: flex; justify-content: center; align-items: flex-start; }
+                        .export-chart-${t} { background-color: var(${varsPrefix}bg-chart); border: 1px solid var(${varsPrefix}border); border-radius: 6px; box-shadow: 0 8px 20px rgba(0,0,0,0.25); width: auto; max-width: 100%;}
+                        .export-header-${t} { padding: 20px 25px 15px; text-align: center; border-bottom: 1px solid var(${varsPrefix}border); }
+                        .export-title-${t} { font-size: 1.8em; font-weight: 600; margin:0 0 5px 0; color: var(${varsPrefix}accent); }
+                        .export-key-${t} { font-size: 1em; font-weight: 400; margin:0; color: var(${varsPrefix}text-secondary); }
+                        .export-section-${t} { /* Puede tener un bgColor sutil */ }
+                        .export-section-header-${t} { padding: 12px 25px 8px; font-size: 1.2em; font-weight: 500; color: var(${varsPrefix}text-primary); border-bottom: 1px dashed var(${varsPrefix}border); margin-bottom: 10px;}
+                        .export-section-content-${t} { display: grid; padding: 0 25px 15px; gap: 4px 8px; }
+                        .export-lyrics-cell-${t} { padding: 4px 0; font-size: 1em; line-height: 1.5; text-align: left; white-space: pre-wrap; align-self: flex-start; }
+                        .export-chord-cell-${t} { padding: 4px 0; font-family: var(${varsPrefix}font-chord); font-size: 1em; font-weight: 500; text-align: center; line-height: 1.4; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; min-height: 1.4em; }
+                        .export-chord-cell-${t} span { display: block; white-space: nowrap; }
+                        .export-chord-cell-empty-${t}::before { content: ""; }
+                        .export-footer-${t} { display: none; }`;
+                    wrapperClass = `export-chart-wrapper-${t}`; chartOuter.className = `export-chart-${t}`; chartBaseFontSize = 14;
+                    measurerLyricsClass = `width-measurer export-lyrics-cell-${t}`; measurerChordClass = `chord-width-measurer export-chord-cell-${t}`;
+                    lyricsFontSizeEm = 1; chordFontSizeEm = 1;
+                }
+                chartOuter.style.fontSize = `${chartBaseFontSize}px`; // Aplicar antes de construir contenido interno que usa 'em'
+
+                // --- CONSTRUCCIÓN DEL HEADER (igual que antes) ---
+                if (templateName === 'classicDark') {
+                    const headerRow = document.createElement('div'); headerRow.className = 'export-header-row-classic';
+                    const titleCell = document.createElement('div'); titleCell.className = 'export-header-title-classic'; titleCell.textContent = songTitleVal;
+                    if (songKeyVal) {
+                        headerRow.style.gridTemplateColumns = 'auto minmax(100px, max-content)';
+                        titleCell.style.borderRight = `1px solid ${getComputedStyle(cssRoot).getPropertyValue('--export-classic-border-color').trim()}`;
+                        const keyCell = document.createElement('div'); keyCell.className = 'export-header-key-classic'; keyCell.textContent = songKeyVal;
+                        headerRow.append(titleCell, keyCell);
+                    } else { headerRow.style.gridTemplateColumns = '1fr'; headerRow.appendChild(titleCell); }
+                    chartOuter.appendChild(headerRow);
+                } else { 
+                    const t = templateName === 'singerProLight' ? 'spec' : templateName.replace('minimalist', 'min-');
+                    const mainHeaderDiv = document.createElement('div'); mainHeaderDiv.className = `export-main-header-${t}`.replace('main-header-min','header-min');
+                    const titleEl = document.createElement('h1'); titleEl.className = `export-title-${t}`; titleEl.textContent = songTitleVal;
+                    mainHeaderDiv.appendChild(titleEl);
+                    if (songKeyVal) {
+                        const keyEl = document.createElement('p'); keyEl.className = `export-key-${t}`;
+                        keyEl.textContent = (templateName === 'singerProLight' ? "Tonalidad: " : "") + songKeyVal;
+                        mainHeaderDiv.appendChild(keyEl);
+                    }
+                    chartOuter.appendChild(mainHeaderDiv);
+                }
+                
+                // --- PRE-CÁLCULO DE ANCHOS (igual que antes) ---
+                const tempMeasureWrapper = document.createElement('div');
+                tempMeasureWrapper.style.cssText = 'position:absolute;left:-9999px;visibility:hidden;';
+                const tempStyleTag = document.createElement('style'); tempStyleTag.textContent = stylesHtml;
+                tempMeasureWrapper.appendChild(tempStyleTag);
+                const chartCloneForMeasure = chartOuter.cloneNode(true);
+                tempMeasureWrapper.appendChild(chartCloneForMeasure);
+                document.body.appendChild(tempMeasureWrapper);
+                
+                let maxLyricsWidth = 80;
+                const lyricsPxSizeForMeasure = chartBaseFontSize * lyricsFontSizeEm;
+                document.querySelectorAll('.song-section-card').forEach(sCard => {
+                    const lyricsText = sCard.querySelector('.lyrics-cell textarea').value;
+                    lyricsText.split('\n').forEach(line => maxLyricsWidth = Math.max(maxLyricsWidth, measureTextWidth(line, measurerLyricsClass, lyricsPxSizeForMeasure)));
+                });
+                let maxChordColsInSong = 0; 
+                document.querySelectorAll('.song-section-card .chord-row').forEach(cRow => {
+                    const inputs = Array.from(cRow.querySelectorAll('.chord-cell input')); let lastNonEmptyIndex = -1;
+                    for (let i = inputs.length - 1; i >= 0; i--) if (inputs[i].value.trim() !== '') { lastNonEmptyIndex = i; break; }
+                    if (lastNonEmptyIndex !== -1) maxChordColsInSong = Math.max(maxChordColsInSong, lastNonEmptyIndex + 1);
+                });
+                if (maxChordColsInSong === 0 && document.querySelector('.chord-row')) maxChordColsInSong = 1;
+
+                const chordColMaxWs = Array(maxChordColsInSong).fill(30);
+                if (maxChordColsInSong > 0) {
+                    const chordPxSizeForMeasure = chartBaseFontSize * chordFontSizeEm;
+                    document.querySelectorAll('.song-section-card').forEach(sCard => {
+                        sCard.querySelectorAll('.chord-row').forEach(cRow => {
+                            const inputs = Array.from(cRow.querySelectorAll('.chord-cell input'));
+                            for (let cIdx = 0; cIdx < maxChordColsInSong; cIdx++) {
+                                if (inputs[cIdx]) {
+                                    const chordHtml = parseChordInputWithAppColors(inputs[cIdx].value);
+                                    if (chordHtml) { 
+                                        let maxVariantWidthInCell = 0; const tempDiv = document.createElement('div'); tempDiv.innerHTML = chordHtml;
+                                        Array.from(tempDiv.childNodes).forEach(node => {
+                                            let textToMeasure = "";
+                                            if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SPAN') textToMeasure = node.textContent;
+                                            else if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') textToMeasure = node.textContent;
+                                            if (textToMeasure) maxVariantWidthInCell = Math.max(maxVariantWidthInCell, measureTextWidth(textToMeasure, measurerChordClass, chordPxSizeForMeasure));
+                                        });
+                                        chordColMaxWs[cIdx] = Math.max(chordColMaxWs[cIdx], maxVariantWidthInCell);
+                                    }
+                                }
+                            }
+                        });
+                    });
+                }
+                document.body.removeChild(tempMeasureWrapper);
+
+                // --- CONSTRUCCIÓN DE SECCIONES (igual que antes) ---
+                document.querySelectorAll('.song-section-card').forEach((sCard) => {
+                    const tBase = templateName === 'classicDark' ? 'classic' : (templateName === 'singerProLight' ? 'spec' : templateName.replace('minimalist', 'min-'));
+                    const sectionDiv = document.createElement('div'); sectionDiv.className = `export-section-${tBase}`;
+                    if (templateName === 'classicDark') sectionDiv.style.backgroundColor = sCard.style.backgroundColor;
+                    else if (templateName === 'singerProLight') sectionDiv.style.backgroundColor = applyOpacityToColor(sCard.style.backgroundColor, 0.08);
+                    
+                    const sectionName = sCard.querySelector('.section-name-input').value || 'Sección';
+                    if (templateName !== 'classicDark') {
+                        const sectionHeaderEl = document.createElement('div'); sectionHeaderEl.className = `export-section-header-${tBase}`;
+                        sectionHeaderEl.textContent = sectionName; sectionDiv.appendChild(sectionHeaderEl);
+                    }
+                    
+                    const contentContainer = (templateName === 'classicDark') ? sectionDiv : document.createElement('div');
+                    if(templateName !== 'classicDark') contentContainer.className = `export-section-content-${tBase}`;
+                    
+                    const numChordRows = sCard.querySelectorAll('.chord-row').length;
+                    let actualCols = maxChordColsInSong; if (numChordRows === 0 || !Array.from(sCard.querySelectorAll('.chord-cell input')).some(inp=>inp.value.trim()!=='')) actualCols = 0;
+                    let gridDef = `${maxLyricsWidth}px`; if(actualCols > 0) gridDef += ` ${chordColMaxWs.slice(0, actualCols).map(w => `${w}px`).join(' ')}`;
+                    contentContainer.style.gridTemplateColumns = gridDef;
+                    
+                    const lyricsCell = document.createElement('div'); lyricsCell.className = `export-lyrics-cell-${tBase}`;
+                    lyricsCell.style.gridRow = `1 / span ${Math.max(1, numChordRows)}`;
+                    lyricsCell.innerHTML = sCard.querySelector('.lyrics-cell textarea').value.replace(/\n/g, '<br>');
+                    if (templateName === 'classicDark') lyricsCell.style.borderRight = actualCols > 0 ? `1px solid ${getComputedStyle(cssRoot).getPropertyValue('--export-classic-border-color').trim()}` : 'none';
+                    contentContainer.appendChild(lyricsCell);
+
+                    if (actualCols > 0) {
+                        sCard.querySelectorAll('.chord-row').forEach((cRow, rIdx) => {
+                            const inputs = Array.from(cRow.querySelectorAll('.chord-cell input'));
+                            const values = inputs.map(input => parseChordInputWithAppColors(input.value));
+                            for (let cIdx = 0; cIdx < actualCols; cIdx++) {
+                                const html = cIdx < values.length ? values[cIdx] : "";
+                                const cell = document.createElement('div'); cell.className = `export-chord-cell-${tBase}`;
+                                if (html === "") cell.classList.add(`export-chord-cell-empty-${tBase}`);
+                                cell.innerHTML = html; cell.style.gridColumn = `${cIdx + 2}`; cell.style.gridRow = `${rIdx + 1}`;
+                                if (templateName === 'classicDark') {
+                                    cell.style.borderTop = `1px solid ${getComputedStyle(cssRoot).getPropertyValue('--export-classic-border-color').trim()}`; if (rIdx === 0) cell.style.borderTop = 'none';
+                                    cell.style.borderRight = (cIdx === actualCols - 1) ? 'none' : `1px solid ${getComputedStyle(cssRoot).getPropertyValue('--export-classic-border-color').trim()}`;
+                                }
+                                contentContainer.appendChild(cell);
+                            }
+                        });
+                    }
+                    if(templateName !== 'classicDark') sectionDiv.appendChild(contentContainer);
+                    chartOuter.appendChild(sectionDiv);
+                });
+                
+                if (templateName === 'singerProLight') {
+                    const footerEl = document.createElement('div'); footerEl.className = 'export-footer-spec';
+                    footerEl.textContent = `Generado con ChordMaster Pro ✨ (${new Date().toLocaleDateString()})`;
+                    chartOuter.appendChild(footerEl);
+                }
+                return { chartElement: chartOuter, stylesHtml, wrapperClass, chartBaseFontSize };
+            }
+            
+            function generateAndSizeChartForPreview(templateName){
+                const { chartElement, stylesHtml, wrapperClass, chartBaseFontSize } = generateChartHtml(templateName);
+                
+                // Para la vista previa, necesitamos añadir el chart al DOM para medir y ajustar su tamaño.
+                const previewSizingContainer = document.createElement('div');
+                previewSizingContainer.className = wrapperClass; // Aplicar la clase de wrapper para el fondo
+                previewSizingContainer.style.cssText = 'position:absolute; left:-9999px; top:-9999px; width:auto; height:auto; padding:0;'; // Sin padding del wrapper para medir el chart puro
+                
+                const styleTag = document.createElement('style');
+                styleTag.textContent = stylesHtml;
+                previewSizingContainer.appendChild(styleTag);
+                previewSizingContainer.appendChild(chartElement); // chartElement ya tiene el chartBaseFontSize aplicado
+                document.body.appendChild(previewSizingContainer);
+
+                let currentFs = chartBaseFontSize;
+                const modalBodyWidth = previewChartContainer.clientWidth - 40; // Ancho disponible en modal (restando paddings)
+                const modalBodyHeight = previewChartContainer.clientHeight - 40;
+                
+                const MIN_FS_PREVIEW = 8; let iterations = 0; const MAX_ITERATIONS = 30;
+                // Bucle para ajustar tamaño de fuente
+                // Hacemos que el chart quepa en el modal
+                // Primero, intentar reducir si es demasiado grande
+                 while (
+                    (chartElement.scrollWidth > modalBodyWidth || chartElement.scrollHeight > modalBodyHeight) &&
+                    currentFs > MIN_FS_PREVIEW && iterations < MAX_ITERATIONS
+                ) {
+                    currentFs -= 0.5;
+                    chartElement.style.fontSize = `${currentFs}px`;
+                    void chartElement.offsetWidth; 
+                    iterations++;
+                }
+                // Opcional: Si es muy pequeño, intentar agrandar (con cuidado para no causar overflow infinito)
+                iterations = 0; // Reset iterations for upsizing
+                 while (
+                    chartElement.scrollWidth < modalBodyWidth * 0.9 && chartElement.scrollHeight < modalBodyHeight * 0.9 &&
+                    currentFs < chartBaseFontSize * 1.5 && // No agrandar demasiado
+                    iterations < MAX_ITERATIONS / 2 // Menos iteraciones para agrandar
+                ) {
+                    currentFs += 0.5;
+                    chartElement.style.fontSize = `${currentFs}px`;
+                     void chartElement.offsetWidth; 
+                    if (chartElement.scrollWidth > modalBodyWidth || chartElement.scrollHeight > modalBodyHeight) {
+                        // Si al agrandar se pasa, revertir y salir
+                        currentFs -= 0.5;
+                        chartElement.style.fontSize = `${currentFs}px`;
+                        void chartElement.offsetWidth;
+                        break;
+                    }
+                    iterations++;
+                }
+
+                // Separar del DOM temporal
+                previewSizingContainer.remove();
+                
+                return { chartElement, stylesHtml, wrapperClass, currentBaseFontSize: currentFs };
+            }
+
+
+            exportPngBtn.addEventListener('click', () => {
+                const selectedTemplate = exportTemplateSelect.value;
+                let chartToExport, stylesForExport, wrapperForExport, finalBaseFontSize;
+
+                // Si hay una vista previa válida y es de la plantilla actual, usarla.
+                if (lastGeneratedPreview.chartElement && 
+                    lastGeneratedPreview.chartElement.classList.contains(`export-chart-${selectedTemplate.replace('minimalist', 'min-').replace('singerProLight', 'spec').replace('classicDark', 'classic')}`) &&
+                    lastGeneratedPreview.currentBaseFontSize) {
+                    
+                    chartToExport = lastGeneratedPreview.chartElement.cloneNode(true); // Usar un clon
+                    stylesForExport = lastGeneratedPreview.stylesHtml;
+                    wrapperForExport = lastGeneratedPreview.wrapperClass;
+                    finalBaseFontSize = lastGeneratedPreview.currentBaseFontSize; // Este es el font-size ya ajustado por la vista previa
+                    // No es necesario re-ajustar la fuente, ya se hizo.
+                } else {
+                    // Si no hay vista previa o no coincide, generar y ajustar desde cero
+                    // Esto es un fallback, idealmente la vista previa siempre está actualizada
+                    const generationResult = generateAndSizeChartForPreview(selectedTemplate);
+                    chartToExport = generationResult.chartElement;
+                    stylesForExport = generationResult.stylesHtml;
+                    wrapperForExport = generationResult.wrapperClass;
+                    finalBaseFontSize = generationResult.currentBaseFontSize;
+                }
+
+                if(!chartToExport) {
+                    alert("Error: No se pudo generar el chart para exportar.");
+                    return;
+                }
+                
+                const exportCanvasWrapper = document.createElement('div');
+                exportCanvasWrapper.className = wrapperForExport;
+                exportCanvasWrapper.style.cssText = 'position:absolute; left:-9999px; top:-9999px; width:auto; height:auto;'; // Será dimensionado por html2canvas
+
+                const styleTag = document.createElement('style');
+                styleTag.textContent = stylesForExport;
+                exportCanvasWrapper.appendChild(styleTag);
+                
+                // El chartToExport ya tiene el font-size ajustado por generateAndSizeChartForPreview
+                // Así que no necesitamos el bucle de ajuste de fuente aquí.
+                // Solo necesitamos asegurar que html2canvas lo renderice con suficiente resolución.
+                chartToExport.style.fontSize = `${finalBaseFontSize}px`; // Confirmar el font-size
+                exportCanvasWrapper.appendChild(chartToExport);
+                document.body.appendChild(exportCanvasWrapper);
+                
+                // --- Dimensiones para html2canvas ---
+                const aspectRatio = exportAspectRatioSelect.value;
+                const A4_WIDTH_PX = 1240; // Referencia para una buena calidad
+                let targetCanvasWidth, targetCanvasHeight;
+
+                // Forzar al chart a tomar sus dimensiones naturales con la fuente ajustada
+                chartToExport.style.width = 'auto';
+                chartToExport.style.height = 'auto';
+                void chartToExport.offsetWidth; // Reflow
+
+                let naturalChartWidth = chartToExport.scrollWidth;
+                let naturalChartHeight = chartToExport.scrollHeight;
+
+                // El wrapper de html2canvas debe tener el padding de la plantilla
+                // Extraer el padding de la clase del wrapper (ej. 'export-chart-wrapper-spec')
+                const tempWrapperForPadding = document.createElement('div');
+                tempWrapperForPadding.className = wrapperForExport;
+                tempWrapperForPadding.style.visibility = 'hidden';
+                document.body.appendChild(tempWrapperForPadding);
+                const wrapperPaddingLeft = parseFloat(getComputedStyle(tempWrapperForPadding).paddingLeft) || 0;
+                const wrapperPaddingTop = parseFloat(getComputedStyle(tempWrapperForPadding).paddingTop) || 0;
+                document.body.removeChild(tempWrapperForPadding);
+
+                if (aspectRatio === "original") {
+                    targetCanvasWidth = naturalChartWidth + (wrapperPaddingLeft * 2);
+                    targetCanvasHeight = naturalChartHeight + (wrapperPaddingTop * 2);
+                } else {
+                    const [rW, rH] = aspectRatio.split(':').map(Number);
+                    // Queremos que el *contenido* del chart se ajuste a A4_WIDTH_PX
+                    // Así que calculamos el tamaño del wrapper que contendría ese chart.
+                    let scaleToFitA4 = A4_WIDTH_PX / naturalChartWidth;
+                    targetCanvasWidth = (naturalChartWidth * scaleToFitA4) + (wrapperPaddingLeft * 2);
+                    targetCanvasHeight = (naturalChartHeight * scaleToFitA4) + (wrapperPaddingTop * 2);
+                    
+                    // Ajustar targetCanvasHeight según el aspect ratio si es necesario
+                    const expectedHeightFromRatio = (targetCanvasWidth / rW) * rH;
+                    if (Math.abs(targetCanvasHeight - expectedHeightFromRatio) > 10) { // Si hay mucha diferencia
+                        // Aquí hay un dilema: ¿priorizar el contenido o el aspect ratio?
+                        // Por ahora, priorizaremos que el contenido quepa y el aspect ratio se ajuste.
+                        // O, podemos forzar el aspect ratio, y el contenido podría escalarse dentro.
+                        // Si forzamos aspect ratio:
+                        targetCanvasHeight = expectedHeightFromRatio;
+                    }
+                }
+                
+                exportCanvasWrapper.style.width = `${targetCanvasWidth}px`;
+                exportCanvasWrapper.style.height = `${targetCanvasHeight}px`;
+                
+                // Centrar el chart dentro del wrapper de html2canvas
+                const contentTargetWidth = targetCanvasWidth - (wrapperPaddingLeft * 2);
+                const contentTargetHeight = targetCanvasHeight - (wrapperPaddingTop * 2);
+                
+                let scaleChart = 1;
+                if (naturalChartWidth > contentTargetWidth || naturalChartHeight > contentTargetHeight) {
+                    scaleChart = Math.min(contentTargetWidth / naturalChartWidth, contentTargetHeight / naturalChartHeight);
+                }
+                chartToExport.style.transform = `scale(${scaleChart})`;
+                chartToExport.style.transformOrigin = 'left top';
+                chartToExport.style.position = 'absolute';
+                chartToExport.style.left = `${wrapperPaddingLeft + (contentTargetWidth - (naturalChartWidth * scaleChart)) / 2}px`;
+                chartToExport.style.top = `${wrapperPaddingTop + (contentTargetHeight - (naturalChartHeight * scaleChart)) / 2}px`;
+
+
+                setTimeout(() => { // Timeout para asegurar que todo esté listo en el DOM
+                    html2canvas(exportCanvasWrapper, {
+                        scale: window.devicePixelRatio * 2, // Aumentar para mejor calidad
+                        backgroundColor: getComputedStyle(exportCanvasWrapper).backgroundColor,
+                        useCORS: true, logging: false, 
+                        width: targetCanvasWidth, height: targetCanvasHeight,
+                        windowWidth: targetCanvasWidth, windowHeight: targetCanvasHeight
+                    }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = (exportFilenameInput.value.trim()||'tabla') + `_${selectedTemplate}` + '.png';
+                        link.href = canvas.toDataURL('image/png'); link.click(); exportCanvasWrapper.remove();
+                        lastGeneratedPreview.chartElement = null; // Invalidar vista previa después de exportar
+                    }).catch(err => {
+                        console.error(`Error exportando ${selectedTemplate}:`, err); alert(`Error al exportar (${selectedTemplate}).`);
+                        exportCanvasWrapper.remove();
+                    });
+                }, 700);
+            });
+            addSection(true);
+        });
+    </script>
+</body>
+</html>
